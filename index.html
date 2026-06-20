@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TraderWin.com - AI Trading Dashboard</title>
-<!-- Bot Builder uses built-in AI API -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <style>
   :root {
@@ -26,7 +26,7 @@
     --radius: 10px;
     --font: 'Segoe UI', system-ui, sans-serif;
   }
-  /* ── BOT BUILDER ── */
+  
   .bb-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
   .bb-tab {
     padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -99,7 +99,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
   
-  /* ── TOP BAR ── */
+
   .topbar {
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
@@ -139,7 +139,7 @@
     margin-left: 6px;
   }
 
-  /* ── TICKER BAR ── */
+  
   .ticker-bar {
     background: var(--bg3);
     border-bottom: 1px solid var(--border);
@@ -157,7 +157,6 @@
   .up { color: var(--green); }
   .dn { color: var(--red); }
 
-  /* ── SIDE NAV ── */
   .layout { display: flex; min-height: calc(100vh - 100px); }
   .sidenav {
     width: 64px;
@@ -192,21 +191,21 @@
   .nav-item:hover { background: var(--bg3); color: var(--text); }
   .nav-item.active { background: rgba(0,212,170,0.15); color: var(--accent); }
 
-  /* ── MAIN CONTENT ── */
+
   .main { flex: 1; overflow-y: auto; padding: 16px; max-width: 100%; }
 
-  /* ── SECTION PANELS ── */
+  
   .section { display: none; }
   .section.active { display: block; }
-/* Hide all sections by default */
+
 .section {
     display: none;
 }
-/* Show the active section */
+
 .section.active {
     display: block;
 }
-  /* ── CARDS ── */
+
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -227,12 +226,12 @@
   }
   .card-title span { font-size: 16px; }
 
-  /* ── GRID ── */
+  
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
   .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 
-  /* ── FORM ELEMENTS ── */
+  
   label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 4px; }
   select, input[type=number], input[type=text], input[type=password] {
     width: 100%;
@@ -248,7 +247,7 @@
   select:focus, input:focus { border-color: var(--accent); }
   option { background: var(--bg2); }
 
-  /* ── BUTTONS ── */
+
   .btn {
     border: none;
     border-radius: 8px;
@@ -269,7 +268,7 @@
   .btn-rise { background: linear-gradient(135deg,#14532d,#16a34a); color: #fff; flex: 1; }
   .btn-fall { background: linear-gradient(135deg,#7f1d1d,#dc2626); color: #fff; flex: 1; }
 
-  /* ── STAT CARDS ── */
+  
   .stat-card {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -283,7 +282,7 @@
   .stat-val.red { color: var(--red); }
   .stat-val.accent { color: var(--accent); }
 
-  /* ── LOG ── */
+
   .log {
     background: #080d18;
     border: 1px solid var(--border);
@@ -303,7 +302,7 @@
   .log-info { color: #38bdf8; }
   .log-warn { color: #f59e0b; }
 
-  /* ── BADGE ── */
+  
   .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
   .badge-green { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
   .badge-red { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
@@ -311,16 +310,15 @@
   .badge-blue { background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); }
   .badge-accent { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
 
-  /* ── STATUS DOT ── */
   .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
   .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
   .dot-red { background: var(--red); }
   .dot-amber { background: var(--yellow); }
 
-  /* ── TRADE BUTTONS ROW ── */
+  
   .trade-row { display: flex; gap: 8px; margin-top: 10px; }
 
-  /* ── PAYOUT DISPLAY ── */
+  
   .payout-box {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -335,7 +333,7 @@
   .payout-label { font-size: 10px; color: var(--text2); margin-bottom: 2px; }
   .payout-val { font-size: 18px; font-weight: 700; }
 
-  /* ── TRADER CARDS ── */
+  
   .trader-card {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -376,7 +374,7 @@
   }
   .copy-toggle.on { background: rgba(0,212,170,0.2); color: var(--accent); border-color: var(--accent); }
 
-  /* ── CONTRACT HISTORY ── */
+  
   .history-row {
     display: flex;
     justify-content: space-between;
@@ -387,7 +385,7 @@
   }
   .history-row:last-child { border-bottom: none; }
 
-  /* ── CHART PLACEHOLDER ── */
+
   .chart-placeholder {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -403,7 +401,7 @@
     margin-bottom: 12px;
   }
 
-  /* ── MODAL ── */
+
   .modal-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.75);
@@ -428,7 +426,7 @@
   .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
   .modal-btns .btn { margin-top: 0; }
 
-  /* ── BOTTOM NAV (mobile) ── */
+
   .bottom-nav {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -455,7 +453,7 @@
   .bnav-item svg { width: 22px; height: 22px; }
   .bnav-item.active { color: var(--accent); }
 
-  /* ── BOT STRATEGY CARDS ── */
+
   .strategy-card {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -468,7 +466,7 @@
   .strategy-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
   .strategy-desc { font-size: 11px; color: var(--text2); }
 
-  /* ── SPEEDBOT SIGNAL INDICATOR ── */
+
   .signal-display {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -483,14 +481,14 @@
   .signal-fall { color: var(--red); }
   .signal-wait { color: var(--yellow); }
 
-  /* ── RANGE SLIDER ── */
+  
   input[type=range] {
     width: 100%;
     accent-color: var(--accent);
     height: 4px;
   }
 
-  /* scrollbar */
+  
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -538,7 +536,7 @@
     <div id="progress-text" style="color:#fff; margin-top:10px; font-family:sans-serif;">0%</div>
 </div>
 
-<!-- TOP BAR -->
+
 <div class="topbar">
   <div class="logo-area">
     <img class="logo-img" src="IMG-20260529-WA0025.jpg" alt="TraderWin" onerror="this.style.display='none'">
@@ -554,7 +552,6 @@
   </div>
 </div>
 
-<!-- TICKER BAR -->
 <div class="ticker-bar" id="tickerBar">
   <div class="ticker-item"><div class="ticker-sym">R_100</div><div class="ticker-price" id="tR100">--</div><div class="ticker-chg up" id="tcR100">+0.00%</div></div>
   <div class="ticker-item"><div class="ticker-sym">R_75</div><div class="ticker-price" id="tR75">--</div><div class="ticker-chg up" id="tcR75">+0.00%</div></div>
