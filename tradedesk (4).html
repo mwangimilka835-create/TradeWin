@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TradeDesk — Trade with your Deriv account</title>
+<style>
+  :root {
+    --bg: #10141c; --card: #171d28; --border: rgba(255,255,255,.09);
+    --text: #f2f4ec; --muted: #9aa3b2; --green: #7ae582; --red: #f0544f;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "DM Sans", system-ui, sans-serif; min-height: 100vh; }
+  .grid-bg { background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 48px 48px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 20px; font-weight: 700; } .logo span { color: var(--green); }
+  .mono { font-family: var(--mono); }
+  .center { min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+  h1 { font-size: clamp(40px, 7vw, 72px); line-height: .95; }
+  .tag { font-family: var(--mono); font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--green); margin-bottom: 24px; }
+  .sub { color: var(--muted); max-width: 420px; margin-top: 24px; }
+  .row { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+  button { cursor: pointer; font: inherit; }
+  .btn-primary { border: 0; border-radius: 999px; background: var(--green); color: #10141c; padding: 16px 32px; font-weight: 700; }
+  .btn-ghost { border: 1px solid var(--border); border-radius: 999px; background: none; color: var(--text); padding: 16px 32px; font-weight: 700; }
+  .btn-primary:disabled, .btn-ghost:disabled { opacity: .4; cursor: default; }
+  .err { color: var(--red); font-size: 14px; margin-top: 20px; max-width: 420px; }
+  .wrap { padding: 24px; display: grid; gap: 24px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .wrap { grid-template-columns: 1fr 320px; } .span2 { grid-column: span 2; } }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .chip { border: 1px solid var(--border); border-radius: 999px; background: none; color: var(--muted); padding: 4px 12px; font-family: var(--mono); font-size: 12px; }
+  .chip.active { border-color: var(--green); color: var(--green); }
+  .price { font-family: var(--mono); font-size: 36px; }
+  .up { color: var(--green); } .down { color: var(--red); }
+  .status { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 12px; }
+  svg.chart { width: 100%; height: 240px; display: block; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  input, select { width: 100%; margin-top: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-family: var(--mono); font-size: 14px; }
+  .trade-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-rise { border: 0; border-radius: 10px; background: var(--green); color: #10141c; padding: 12px; font-weight: 700; }
+  .btn-fall { border: 0; border-radius: 10px; background: var(--red); color: #fff; padding: 12px; font-weight: 700; }
+  .btn-rise:disabled, .btn-fall:disabled { opacity: .4; }
+  table { width: 100%; font-family: var(--mono); font-size: 13px; border-collapse: collapse; }
+  th { text-align: left; color: var(--muted); font-weight: 400; padding: 8px 4px; }
+  td { padding: 8px 4px; border-top: 1px solid var(--border); }
+  .hidden { display: none !important; }
+
+  /* ---- added: tabs, stats, builder, bots ---- */
+  nav.tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 14px 16px; font-weight: 600; white-space: nowrap; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .stat .k { font-size: 12px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+  .stat .v { font-family: var(--mono); font-size: 24px; margin-top: 6px; }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .fgrid .full { grid-column: 1 / -1; }
+  h3 { font-size: 13px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; margin: 8px 0 14px; }
+  .log { font-family: var(--mono); font-size: 12px; color: var(--muted); max-height: 220px; overflow-y: auto; margin-top: 12px; }
+  .log div { padding: 3px 0; border-top: 1px solid var(--border); }
+  .log .err { color: var(--red); margin: 0; max-width: none; font-size: 12px; }
+  .log .ok { color: var(--green); }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .badge.run { border-color: var(--green); color: var(--green); }
+  .badge.low { border-color: var(--green); color: var(--green); }
+  .badge.med { border-color: #f5c451; color: #f5c451; }
+  .badge.high { border-color: var(--red); color: var(--red); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .cards .panel { display: flex; flex-direction: column; gap: 10px; }
+  .cards p.d { font-size: 14px; color: var(--muted); flex: 1; }
+  .mini { padding: 8px 16px !important; font-size: 13px; }
+  .btn-stop { border: 0; border-radius: 999px; background: var(--red); color: #fff; padding: 12px 24px; font-weight: 700; }
+  textarea { width: 100%; min-height: 90px; margin-top: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-family: var(--mono); font-size: 12px; }
+  .botrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 14px; flex-wrap: wrap; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+  @media (max-width: 600px) { .fgrid { grid-template-columns: 1fr; } }
+  /* ---- added: analysis + copy trading ---- */
+  .plot { position: relative; height: 160px; display: flex; align-items: flex-end; gap: 8px; margin: 28px 0 0; }
+  .bar { flex: 1; position: relative; min-height: 2px; border-radius: 6px 6px 0 0; background: var(--muted); opacity: .55; }
+  .bar.hi { background: var(--green); opacity: 1; } .bar.lo { background: var(--red); opacity: 1; }
+  .bpct { position: absolute; top: -17px; left: -4px; right: -4px; text-align: center; font-family: var(--mono); font-size: 10px; color: var(--text); }
+  .refline { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.35); pointer-events: none; }
+  .digits { display: flex; gap: 8px; margin-top: 6px; }
+  .digits span { flex: 1; text-align: center; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 14px; }
+  .checks label { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; }
+  .checks input { width: auto; margin: 0; }
+  .stat .v.sm { font-size: 18px; }
+  /* ---- added: splash / loading screen ---- */
+  #splash { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; background: var(--bg); transition: opacity .6s ease, visibility .6s; }
+  #splash::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 48px 48px; -webkit-mask-image: radial-gradient(circle at center, #000 0, transparent 70%); mask-image: radial-gradient(circle at center, #000 0, transparent 70%); }
+  #splash.out { opacity: 0; visibility: hidden; pointer-events: none; }
+  #splash > * { position: relative; }
+  .brain-wrap { width: min(220px, 52vw); animation: brainPulse 1.8s ease-in-out infinite; }
+  .brain-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .brain-shine { animation: brainSweep 2.2s ease-in-out infinite; }
+  .splash-logo { font-size: 34px; font-weight: 700; letter-spacing: .01em; }
+  .splash-logo span { color: var(--green); }
+  .loadbar { width: min(320px, 72vw); }
+  .loadtrack { height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; border: 1px solid var(--border); }
+  .loadfill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #8f0710, #ff3b30 70%, #ff8a80); box-shadow: 0 0 14px rgba(255,59,48,.8); }
+  .loadmeta { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  @keyframes brainPulse { 0%,100% { filter: drop-shadow(0 0 10px rgba(255,40,40,.45)); transform: scale(1); } 50% { filter: drop-shadow(0 0 26px rgba(255,40,40,.9)); transform: scale(1.04); } }
+  @keyframes brainSweep { from { transform: translateX(-130px); } to { transform: translateX(300px); } }
+  @media (prefers-reduced-motion: reduce) { .brain-wrap, .brain-shine { animation: none; } }
+</style>
+</head>
+<body>
+
+<!-- ============ SPLASH ============ -->
+<div id="splash" aria-label="Loading TradeDesk">
+  <div class="brain-wrap">
+    <svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Red brain">
+      <defs>
+        <radialGradient id="brainFill" cx="35%" cy="28%" r="85%">
+          <stop offset="0" stop-color="#ff8f86"/>
+          <stop offset=".3" stop-color="#ff3b30"/>
+          <stop offset=".7" stop-color="#c3101a"/>
+          <stop offset="1" stop-color="#6b0008"/>
+        </radialGradient>
+        <linearGradient id="brainGloss" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#fff" stop-opacity=".7"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <path id="brainShape" d="M100 22C85 8 55 10 42 30C22 33 10 55 18 75C6 90 12 115 32 122C38 142 62 152 82 143C90 150 96 150 100 148C104 150 110 150 118 143C138 152 162 142 168 122C188 115 194 90 182 75C190 55 178 33 158 30C145 10 115 8 100 22Z"/>
+        <clipPath id="brainClip"><use href="#brainShape"/></clipPath>
+        <g id="folds" fill="none" stroke="#5a0007" stroke-opacity=".55" stroke-width="3" stroke-linecap="round">
+          <path d="M45 45C60 40 70 52 62 62"/><path d="M30 80C48 78 58 90 50 100"/>
+          <path d="M42 120C58 112 72 122 70 135"/><path d="M72 38C80 52 78 68 90 72"/>
+          <path d="M62 90C72 96 84 92 88 102"/><path d="M78 118C86 112 92 120 92 130"/>
+        </g>
+      </defs>
+      <use href="#brainShape" fill="url(#brainFill)" stroke="#ff9a92" stroke-width="2" stroke-linejoin="round"/>
+      <use href="#folds"/>
+      <g transform="translate(200 0) scale(-1 1)"><use href="#folds"/></g>
+      <path d="M100 22C96 55 104 90 100 148" fill="none" stroke="#4a0006" stroke-opacity=".8" stroke-width="3.5" stroke-linecap="round"/>
+      <ellipse cx="68" cy="42" rx="30" ry="12" fill="#fff" opacity=".28" transform="rotate(-18 68 42)"/>
+      <g clip-path="url(#brainClip)"><rect class="brain-shine" x="0" y="0" width="60" height="170" fill="url(#brainGloss)" transform="skewX(-20)" opacity=".8"/></g>
+    </svg>
+  </div>
+  <div class="splash-logo">Trade<span>Desk</span></div>
+  <div class="loadbar">
+    <div class="loadtrack"><div class="loadfill" id="splash-fill"></div></div>
+    <div class="loadmeta"><span id="splash-label">Loading…</span><span id="splash-pct">0%</span></div>
+  </div>
+</div>
+<script>
+(function () {
+  var splash = document.getElementById("splash"), fill = document.getElementById("splash-fill"),
+      pct = document.getElementById("splash-pct"), label = document.getElementById("splash-label");
+  var t0 = Date.now(), shown = 0, done = false;
+  function hide() { splash.classList.add("out"); setTimeout(function () { splash.parentNode && splash.parentNode.removeChild(splash); }, 800); }
+  function set(v) { shown = v; fill.style.width = v + "%"; pct.textContent = Math.round(v) + "%"; }
+  function tick() {
+    var t = Date.now() - t0, ready = window.__tdReady === true;
+    // takes at least ~2.2s to reach 100%; holds at 90% until the app is ready (hard stop at 8s)
+    var target = Math.min(ready ? 100 : 90, (t / 2200) * 100);
+    if (t > 8000) target = 100;
+    var next = shown + Math.max(0.4, (target - shown) * 0.12);
+    set(Math.min(target, next));
+    if (shown >= 99.5 && t > 1400) { set(100); label.textContent = "Ready"; setTimeout(hide, 350); return; }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<div id="fatal" class="hidden" style="position:fixed;left:0;right:0;top:0;z-index:200;background:#f0544f;color:#fff;padding:10px 16px;font:13px/1.4 ui-monospace,monospace"></div>
+<script>
+(function(){var f=document.getElementById("fatal");
+function show(m){f.textContent="TradeDesk error: "+m;f.classList.remove("hidden");}
+window.addEventListener("error",function(e){show(e.message||"script error");});
+window.addEventListener("unhandledrejection",function(e){show((e.reason&&e.reason.message)||String(e.reason));});})();
+</script>
+
+<!-- ============ LOGIN PAGE ============ -->
+<div id="page-login" class="grid-bg">
+  <header style="border:0">
+    <span class="logo">Trade<span>Desk</span></span>
+    <span class="mono" style="font-size:12px;color:var(--muted)">● markets live 24/7</span>
+  </header>
+  <section class="center">
+    <p class="tag">Powered by Deriv</p>
+    <h1>Your Deriv account.<br>A sharper desk.</h1>
+    <p class="sub">Sign in securely on Deriv, then come straight back here to watch live prices and place trades.</p>
+    <div class="row">
+      <button class="btn-primary" id="btn-login">Log in with Deriv</button>
+      <button class="btn-ghost" id="btn-signup">Create Deriv account</button>
+    </div>
+    <p class="err hidden" id="login-err"></p>
+  </section>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="page-dash" class="hidden">
+  <header>
+    <span class="logo">Trade<span>Desk</span></span>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <select id="acct-select" class="hidden" style="width:auto"></select>
+      <span class="badge" id="conn-badge">Connecting…</span>
+      <span class="mono" id="balance" style="font-size:14px">—</span>
+      <button class="btn-ghost" style="padding:8px 16px;font-size:14px" id="btn-logout">Log out</button>
+    </div>
+  </header>
+  <div id="conn-bar" class="hidden" style="padding:10px 24px;background:rgba(240,84,79,.12);border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <span class="mono" id="conn-msg" style="font-size:13px;color:var(--red);flex:1;min-width:200px"></span>
+    <button class="btn-ghost mini" id="conn-retry">Reconnect</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="manual">Manual Trader</button>
+    <button class="tab" data-tab="analysis">Analysis</button>
+    <button class="tab" data-tab="builder">Bot Builder</button>
+    <button class="tab" data-tab="free">Free Bots</button>
+    <button class="tab" data-tab="copy">Copy Trading</button>
+  </nav>
+
+  <!-- ===== TAB: DASHBOARD ===== -->
+  <div class="tabpane wrap" id="tab-dashboard">
+    <section class="span2 stats">
+      <div class="panel stat"><div class="k">Balance</div><div class="v" id="st-balance">—</div></div>
+      <div class="panel stat"><div class="k">Session P/L</div><div class="v" id="st-pl">0.00</div></div>
+      <div class="panel stat"><div class="k">Win rate</div><div class="v" id="st-wr">—</div></div>
+      <div class="panel stat"><div class="k">Trades</div><div class="v" id="st-trades">0</div></div>
+    </section>
+    <section class="panel">
+      <h2 style="margin-bottom:12px">Session equity</h2>
+      <p id="eq-empty" style="font-size:14px;color:var(--muted)">Place a trade or run a bot to see your P/L curve.</p>
+      <svg class="chart hidden" id="eq-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line id="eq-zero" x1="0" x2="100" y1="50" y2="50" stroke="rgba(255,255,255,.15)" stroke-width="0.4" vector-effect="non-scaling-stroke" stroke-dasharray="2 2"></line>
+        <polyline id="eq-line" fill="none" stroke="#7ae582" stroke-width="0.6" vector-effect="non-scaling-stroke" points=""></polyline>
+      </svg>
+    </section>
+    <aside class="panel">
+      <h2 style="margin-bottom:16px">Bot status</h2>
+      <p style="margin-bottom:10px"><span class="badge" id="bot-badge">Idle</span></p>
+      <p class="mono" style="font-size:13px" id="bot-summary">No bot running.</p>
+      <div class="row" style="margin-top:16px;justify-content:flex-start">
+        <button class="btn-stop hidden" id="dash-stop">Stop bot</button>
+        <button class="btn-ghost mini" id="dash-goto">Open Bot Builder</button>
+      </div>
+    </aside>
+    <section class="panel span2" style="overflow-x:auto">
+      <h2 style="margin-bottom:12px">Recent trades</h2>
+      <p id="no-trades" style="font-size:14px;color:var(--muted)">No trades yet.</p>
+      <table id="trades" class="hidden">
+        <thead><tr><th>Time</th><th>Type</th><th>Stake</th><th>Payout</th><th>P/L</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- ===== TAB: MANUAL TRADER ===== -->
+  <div class="tabpane wrap hidden" id="tab-manual">
+    <section class="panel">
+      <div class="chips" id="markets"></div>
+      <div><span class="price" id="price">—</span><span class="status" id="status">Connecting…</span></div>
+      <p class="mono" style="font-size:12px;color:var(--muted);margin-top:6px">Last digit: <span id="last-digit">—</span></p>
+      <svg class="chart" id="chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon id="chart-fill" fill="rgba(122,229,130,.1)" points=""></polygon>
+        <polyline id="chart-line" fill="none" stroke="#7ae582" stroke-width="0.6" vector-effect="non-scaling-stroke" points=""></polyline>
+      </svg>
+    </section>
+    <aside class="panel">
+      <h2 style="margin-bottom:16px">Manual trade</h2>
+      <label>Trade type
+        <select id="mode">
+          <option value="rf">Rise / Fall</option>
+          <option value="eo">Even / Odd</option>
+          <option value="ou">Over / Under (digit)</option>
+        </select>
+      </label>
+      <label id="barrier-wrap" class="hidden">Digit barrier (0–9) <input type="number" id="barrier" min="0" max="9" step="1" value="5"></label>
+      <label>Stake <input type="number" id="stake" min="0.35" step="0.5" value="1"></label>
+      <label>Duration (ticks) <input type="number" id="duration" min="1" max="10" value="5"></label>
+      <div class="trade-btns">
+        <button class="btn-rise" id="btn-rise" disabled>Rise ▲</button>
+        <button class="btn-fall" id="btn-fall" disabled>Fall ▼</button>
+      </div>
+      <p class="mono" id="msg" style="font-size:12px;color:var(--muted);margin-top:12px"></p>
+    </aside>
+  </div>
+
+  <!-- ===== TAB: ANALYSIS ===== -->
+  <div class="tabpane wrap hidden" id="tab-analysis">
+    <section class="panel">
+      <h2 style="margin-bottom:4px">Last-digit distribution</h2>
+      <p class="note" style="margin:0" id="an-sub">Press Analyze to load recent ticks.</p>
+      <div class="plot" id="an-plot"></div>
+      <div class="digits" id="an-digits"></div>
+      <h3 style="margin-top:20px">Last 20 digits <span style="text-transform:none;letter-spacing:0">(green = even)</span></h3>
+      <div class="chips" id="an-tail"></div>
+      <p class="note" id="an-verdict"></p>
+    </section>
+    <aside class="panel">
+      <h2 style="margin-bottom:16px">Analyze</h2>
+      <label>Market <select id="an-symbol"></select></label>
+      <label>Sample size
+        <select id="an-count"><option value="100">Last 100 ticks</option><option value="500" selected>Last 500 ticks</option><option value="1000">Last 1,000 ticks</option><option value="5000">Last 5,000 ticks</option></select>
+      </label>
+      <label>Over / Under barrier <select id="an-barrier"></select></label>
+      <div class="checks"><label><input type="checkbox" id="an-live"> Auto-refresh every 6 seconds</label></div>
+      <div class="trade-btns">
+        <button class="btn-rise" id="an-run">Analyze</button>
+        <button class="btn-ghost mini" id="an-tobuilder">Use in Bot Builder</button>
+      </div>
+      <p class="mono" id="an-msg" style="font-size:12px;color:var(--muted);margin-top:12px"></p>
+    </aside>
+    <section class="span2 stats" id="an-stats"></section>
+    <section class="panel span2">
+      <h3>How to read this</h3>
+      <p class="note" style="margin:0">Volatility indices come from a random number generator. How often a digit or direction showed up recently does not change the odds of the next tick, and a digit that looks "due" is not. Use this to describe recent behavior and to sanity-check a bot's settings, not to predict the next tick. The χ² line tells you if the digit pattern is more uneven than chance alone usually produces.</p>
+    </section>
+  </div>
+
+  <!-- ===== TAB: BOT BUILDER ===== -->
+  <div class="tabpane wrap hidden" id="tab-builder">
+    <section class="panel">
+      <h2 style="margin-bottom:6px">Build your bot</h2>
+      <p class="note" style="margin:0 0 16px">Set when the bot trades, what it trades, and how it manages risk. It places one trade at a time while this page stays open.</p>
+      <div class="fgrid">
+        <label class="full">Bot name <input type="text" id="b-name" value="My bot"></label>
+        <label>Market <select id="b-symbol"></select></label>
+        <label>Trade type
+          <select id="b-type">
+            <option value="SIGNAL">Rise/Fall — follow signal</option>
+            <option value="RISE">Rise only</option>
+            <option value="FALL">Fall only</option>
+            <option value="EVEN">Digit Even</option>
+            <option value="ODD">Digit Odd</option>
+            <option value="OVER">Digit Over</option>
+            <option value="UNDER">Digit Under</option>
+          </select>
+        </label>
+        <label id="b-barrier-wrap" class="hidden">Digit barrier (0–9) <input type="number" id="b-barrier" min="0" max="9" value="5"></label>
+        <label>Duration (ticks) <input type="number" id="b-duration" min="1" max="10" value="5"></label>
+        <label>Base stake <input type="number" id="b-stake" min="0.35" step="0.5" value="1"></label>
+      </div>
+      <h3>Entry signal</h3>
+      <div class="fgrid">
+        <label class="full">Enter a trade when
+          <select id="b-signal"></select>
+        </label>
+        <div id="sig-fields" class="full fgrid" style="padding:0"></div>
+      </div>
+      <h3>Risk management</h3>
+      <div class="fgrid">
+        <label>Stake multiplier after loss (1 = off) <input type="number" id="b-mult" min="1" max="5" step="0.1" value="1"></label>
+        <label>Max multiplier steps <input type="number" id="b-steps" min="1" max="8" value="3"></label>
+        <label>Take profit (stop at +) <input type="number" id="b-tp" min="0" step="0.5" value="5"></label>
+        <label>Stop loss (stop at −) <input type="number" id="b-sl" min="0" step="0.5" value="5"></label>
+        <label class="full">Max trades (0 = unlimited) <input type="number" id="b-max" min="0" step="1" value="0"></label>
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-start">
+        <button class="btn-primary" id="b-run">▶ Run bot</button>
+        <button class="btn-ghost" id="b-save">Save bot</button>
+      </div>
+      <p class="note">Bots can lose money, and multipliers raise losses fast. Test on a demo account first. Nothing here is financial advice.</p>
+    </section>
+    <aside class="panel">
+      <h2 style="margin-bottom:12px">Run panel</h2>
+      <p style="margin-bottom:10px"><span class="badge" id="bot-badge2">Idle</span></p>
+      <p class="mono" style="font-size:13px" id="bot-summary2">No bot running.</p>
+      <button class="btn-stop hidden" id="b-stop" style="margin-top:14px">Stop bot</button>
+      <div class="log" id="bot-log"></div>
+    </aside>
+    <section class="panel span2">
+      <h2 style="margin-bottom:12px">My bots</h2>
+      <p id="no-bots" style="font-size:14px;color:var(--muted)">No saved bots yet. Build one above and press Save.</p>
+      <div id="my-bots"></div>
+      <h3 style="margin-top:20px">Import / export</h3>
+      <textarea id="bot-json" placeholder="Bot JSON appears here when you press Export. Paste JSON and press Import to load one."></textarea>
+      <div class="row" style="margin-top:10px;justify-content:flex-start">
+        <button class="btn-ghost mini" id="b-export">Export current</button>
+        <button class="btn-ghost mini" id="b-import">Import to builder</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== TAB: FREE BOTS ===== -->
+  <div class="tabpane hidden" id="tab-free" style="padding:24px">
+    <p class="note" style="margin:0 0 20px;max-width:640px">Ready-made starter bots. Open one in the builder to tweak it, or run it as is. These are examples, not promises: no strategy wins every time. Try them on a demo account first.</p>
+    <div class="cards" id="free-bots"></div>
+  </div>
+
+  <!-- ===== TAB: COPY TRADING ===== -->
+  <div class="tabpane wrap hidden" id="tab-copy">
+    <section class="panel">
+      <h2 style="margin-bottom:6px">Copy a trader</h2>
+      <p class="note" style="margin:0 0 16px">Paste the trader's read-only API token. Deriv then places matching trades on your account automatically, including when this page is closed. The trader has to switch on "allow copiers" and share the token with you.</p>
+      <label>Trader's API token <input type="password" id="cp-token" autocomplete="off" placeholder="Paste token (not saved)"></label>
+      <div class="fgrid">
+        <label>Min stake to copy <input type="number" id="cp-min" min="0.35" step="0.5" placeholder="no minimum"></label>
+        <label>Max stake to copy <input type="number" id="cp-max" min="0.35" step="0.5" placeholder="no maximum"></label>
+      </div>
+      <h3>Markets <span style="text-transform:none;letter-spacing:0">(none ticked = copy all)</span></h3>
+      <div class="checks" id="cp-assets"></div>
+      <h3>Trade types <span style="text-transform:none;letter-spacing:0">(none ticked = copy all)</span></h3>
+      <div class="checks" id="cp-types"></div>
+      <div class="row" style="margin-top:8px;justify-content:flex-start"><button class="btn-primary" id="cp-start">Start copying</button></div>
+      <p class="mono" id="cp-msg" style="font-size:12px;color:var(--muted);margin-top:12px"></p>
+      <p class="note">Copying uses your money and repeats the trader's wins and losses, including their mistakes. Set a max stake you're comfortable losing, and stop copying any time from the list below.</p>
+    </section>
+    <aside class="panel">
+      <h2 style="margin-bottom:12px">Share your trades</h2>
+      <p class="mono" style="font-size:13px" id="cp-allow">Status: unknown</p>
+      <div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px">
+        <button class="btn-ghost mini" id="cp-allow-on">Allow copiers</button>
+        <button class="btn-ghost mini" id="cp-allow-off">Stop allowing</button>
+      </div>
+      <p class="note">After allowing copiers, create a read-only API token on your Deriv account and give it to the people who should copy you.</p>
+      <h3 style="margin-top:20px">Trader statistics</h3>
+      <label>Trader account ID <input type="text" id="cp-trader-id" placeholder="e.g. CR123456"></label>
+      <button class="btn-ghost mini" id="cp-stats">Get statistics</button>
+    </aside>
+    <section class="panel span2">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2>Active copying</h2><button class="btn-ghost mini" id="cp-refresh">Refresh</button></div>
+      <h3>Traders you copy</h3>
+      <p id="cp-no-traders" style="font-size:14px;color:var(--muted)">You aren't copying anyone.</p>
+      <div id="cp-traders"></div>
+      <h3 style="margin-top:20px">People copying you</h3>
+      <p id="cp-copiers" style="font-size:14px;color:var(--muted)">None.</p>
+      <div id="cp-statsbox" style="overflow-x:auto;margin-top:16px"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const DERIV_APP_ID = "34FTTrVnEAsQhQIM7WWbS";
+const DERIV_AUTH_URL = "https://auth.deriv.com/oauth2/auth";
+const DERIV_TOKEN_URL = "https://auth.deriv.com/oauth2/token";
+const DERIV_API_BASE = "https://api.derivws.com";
+const DERIV_SCOPES = "trade account_manage";
+const MARKETS = [
+  { symbol: "R_100", name: "Volatility 100" },
+  { symbol: "R_75",  name: "Volatility 75" },
+  { symbol: "R_50",  name: "Volatility 50" },
+  { symbol: "R_25",  name: "Volatility 25" },
+  { symbol: "R_10",  name: "Volatility 10" },
+];
+/* NOTE: the redirect URI must match your Deriv app settings exactly.
+   When hosting this file, register  <your-site-url>/tradedesk.html  (this file's full URL). */
+const REDIRECT_URI = location.origin + location.pathname;
+
+/* ================= Safe storage ================= */
+const mem = {};
+const store = (area) => ({
+  get(k) { try { return window[area].getItem(k); } catch { return mem[area + k] ?? null; } },
+  set(k, v) { try { window[area].setItem(k, v); } catch { mem[area + k] = v; } },
+  del(k) { try { window[area].removeItem(k); } catch { delete mem[area + k]; } },
+});
+const LS = store("localStorage"), SS = store("sessionStorage");
+
+/* ================= PKCE helpers ================= */
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function createPkce() {
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  return { verifier, challenge: b64url(digest) };
+}
+const randomState = () => b64url(crypto.getRandomValues(new Uint8Array(16)));
+
+/* ================= Login ================= */
+async function startLogin(signup) {
+  const { verifier, challenge } = await createPkce();
+  const state = randomState();
+  SS.set("deriv_pkce", JSON.stringify({ verifier, state }));
+  const p = new URLSearchParams({
+    response_type: "code", client_id: DERIV_APP_ID, redirect_uri: REDIRECT_URI,
+    scope: DERIV_SCOPES, state, code_challenge: challenge, code_challenge_method: "S256",
+  });
+  if (signup) p.set("prompt", "registration");
+  location.href = DERIV_AUTH_URL + "?" + p;
+}
+document.getElementById("btn-login").onclick = () => startLogin(false).catch((e) => showErr(e.message));
+document.getElementById("btn-signup").onclick = () => startLogin(true).catch((e) => showErr(e.message));
+
+function showErr(msg) {
+  const el = document.getElementById("login-err");
+  el.textContent = msg; el.classList.remove("hidden");
+}
+
+/* ================= Token storage (localStorage — static file has no server) ================= */
+const getToken = () => LS.get("deriv_token");
+const setToken = (t) => LS.set("deriv_token", t);
+
+async function handleCallback() {
+  const q = new URLSearchParams(location.search);
+  const code = q.get("code"), state = q.get("state");
+  if (!code) return false;
+  const saved = JSON.parse(SS.get("deriv_pkce") || "null");
+  SS.del("deriv_pkce");
+  history.replaceState(null, "", location.pathname);
+  if (!saved || saved.state !== state) { showErr("Login check failed — please try again."); return false; }
+  const res = await fetch(DERIV_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "authorization_code", client_id: DERIV_APP_ID,
+      code, redirect_uri: REDIRECT_URI, code_verifier: saved.verifier,
+    }),
+  });
+  if (!res.ok) { showErr("Deriv login failed: " + (await res.text())); return false; }
+  const json = await res.json();
+  setToken(json.access_token);
+  return true;
+}
+
+/* ================= Deriv REST ================= */
+async function derivFetch(path, init) {
+  const res = await fetch(DERIV_API_BASE + path, {
+    ...init,
+    headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json", ...(init?.headers || {}) },
+  });
+  if (res.status === 401) { logout(); throw new Error("Not logged in"); }
+  if (!res.ok) throw new Error("Deriv request failed [" + res.status + "]: " + (await res.text()));
+  const t = await res.text();
+  return t ? JSON.parse(t) : {};
+}
+
+/* ================= Dashboard / shared state ================= */
+let ws = null, account = "", symbol = MARKETS[0].symbol, live = false, currency = "", balance = 0;
+const tickStore = {};      // symbol -> array of quotes
+const pipSizes = {};       // symbol -> decimals
+const acctType = {};       // account id -> "demo" | "real"
+const tracked = {};        // contract_id -> { src, done }
+const session = { trades: 0, wins: 0, pl: 0, curve: [0] };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtPL = (n) => (n >= 0 ? "+" : "") + n.toFixed(2);
+
+function showDash() {
+  $("page-login").classList.add("hidden");
+  $("page-dash").classList.remove("hidden");
+}
+function logout() {
+  LS.del("deriv_token");
+  ws && ws.close();
+  location.reload();
+}
+$("btn-logout").onclick = logout;
+
+/* ---- connection status (shown on every tab) ---- */
+function setStatus(text) {
+  const el = $("status"); if (el) el.textContent = text;
+  const ok = text === "Live", busy = text === "Connecting…";
+  $("conn-badge").textContent = ok ? "● Live" : busy ? "Connecting…" : "Not connected";
+  $("conn-badge").classList.toggle("run", ok);
+  const bar = $("conn-bar");
+  bar.classList.toggle("hidden", ok || busy);
+  $("conn-msg").textContent = ok || busy ? "" : text;
+}
+$("conn-retry").onclick = () => {
+  setStatus("Connecting…");
+  (account ? Promise.resolve(connect()) : loadAccounts()).catch((e) => setStatus(e.message));
+};
+
+/* ---- tabs ---- */
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".tabpane").forEach((p) => p.classList.toggle("hidden", p.id !== "tab-" + name));
+  if (name === "analysis" && live && !an.prices.length) anFetch();
+  if (name === "copy" && live) refreshCopy();
+}
+$("tabs").onclick = (e) => { const b = e.target.closest(".tab"); if (b) showTab(b.dataset.tab); };
+$("dash-goto").onclick = () => showTab("builder");
+
+async function loadAccounts() {
+  const json = await derivFetch("/trading/v1/options/accounts");
+  const list = (json.data ?? json.accounts ?? []).map((a) => ({
+    id: String(a.account_id ?? a.id ?? a.loginid ?? ""),
+    type: String(a.account_type ?? (a.is_virtual ? "demo" : "real")),
+  }));
+  if (!list.length) { setStatus("No trading accounts found."); return; }
+  list.forEach((a) => (acctType[a.id] = a.type));
+  account = list[0].id;
+  if (list.length > 1) {
+    const sel = $("acct-select");
+    sel.classList.remove("hidden");
+    sel.innerHTML = list.map((a) => `<option value="${esc(a.id)}">${esc(a.id)} · ${esc(a.type)}</option>`).join("");
+    sel.onchange = () => { account = sel.value; connect(); };
+  }
+  connect();
+}
+
+function connect() {
+  if (bot.running) botStop("Stopped: connection changed");
+  ws && ws.close();
+  live = false;
+  Object.keys(tickStore).forEach((k) => delete tickStore[k]);
+  subs.clear();
+  drawChart();
+  setStatus("Connecting…");
+  derivFetch(`/trading/v1/options/accounts/${encodeURIComponent(account)}/otp`, { method: "POST" })
+    .then((json) => {
+      const url = json.data?.url ?? json.url;
+      if (!url) throw new Error("No trading connection URL returned");
+      ws = new WebSocket(url);
+      ws.onopen = () => {
+        live = true;
+        setStatus("Live");
+        $("btn-rise").disabled = $("btn-fall").disabled = false;
+        ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+        ws.send(JSON.stringify({ profit_table: 1, limit: 15, description: 1, sort: "DESC" }));
+        subscribeTicks();
+      };
+      ws.onmessage = onMessage;
+      ws.onclose = () => {
+        live = false;
+        setStatus("Disconnected");
+        $("btn-rise").disabled = $("btn-fall").disabled = true;
+        if (bot.running) botStop("Stopped: disconnected");
+      };
+    })
+    .catch((e) => { setStatus(e.message); });
+}
+
+function onMessage(ev) {
+  const d = JSON.parse(ev.data);
+  const src = d.echo_req?.passthrough?.src;
+
+  if (d.error) {
+    if (src === "analysis") { $("an-msg").textContent = d.error.message; return; }
+    if (src === "copy") { copyMsg(d.error.message, true); return; }
+    if (src === "bot") {
+      botLog("Error: " + d.error.message, "err");
+      if (d.msg_type === "buy") { bot.inTrade = false; botStop("Stopped: " + d.error.message); }
+    } else {
+      $("msg").textContent = d.error.message;
+    }
+    return;
+  }
+  if (d.msg_type === "balance") {
+    currency = d.balance.currency;
+    balance = d.balance.balance;
+    const t = balance.toFixed(2) + " " + currency;
+    $("balance").textContent = t; $("st-balance").textContent = t;
+  }
+  if (d.msg_type === "history") {
+    const sym = d.echo_req.ticks_history;
+    if (src === "analysis") { onAnalysisData(sym, d); return; }
+    tickStore[sym] = d.history.prices;
+    if (d.pip_size !== undefined) pipSizes[sym] = d.pip_size;
+    if (sym === symbol) drawChart();
+  }
+  if (d.msg_type === "tick") {
+    const sym = d.tick.symbol;
+    if (d.tick.pip_size !== undefined) pipSizes[sym] = d.tick.pip_size;
+    tickStore[sym] = [...(tickStore[sym] || []).slice(-199), d.tick.quote];
+    if (sym === symbol) drawChart();
+    onBotTick(sym);
+  }
+  if (d.msg_type === "buy") {
+    const id = d.buy.contract_id;
+    tracked[id] = { src: src || "manual", done: false };
+    if (src === "bot") botLog(`Trade #${id} placed (stake ${d.buy.buy_price})`);
+    else $("msg").textContent = "Trade placed: " + d.buy.longcode;
+    ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: id, subscribe: 1 }));
+  }
+  if (d.msg_type === "proposal_open_contract") {
+    const c = d.proposal_open_contract;
+    const t = c && tracked[c.contract_id];
+    if (t && c.is_sold && !t.done) {
+      t.done = true;
+      if (d.subscription?.id) ws.send(JSON.stringify({ forget: d.subscription.id }));
+      onContractDone(t.src, Number(c.profit));
+    }
+  }
+  if (d.msg_type === "profit_table") renderTrades(d.profit_table.transactions);
+  if (d.msg_type === "copy_start") { copyMsg("Copying started.", false); $("cp-token").value = ""; refreshCopy(); }
+  if (d.msg_type === "copy_stop") { copyMsg("Copying stopped.", false); refreshCopy(); }
+  if (d.msg_type === "copytrading_list") renderCopyList(d.copytrading_list || {});
+  if (d.msg_type === "copytrading_statistics") $("cp-statsbox").innerHTML = "<h3>Trader statistics</h3>" + renderKV(d.copytrading_statistics || {});
+  if (d.msg_type === "get_settings") renderAllow(d.get_settings && d.get_settings.allow_copiers);
+  if (d.msg_type === "set_settings") { copyMsg("Settings updated.", false); ws.send(JSON.stringify({ get_settings: 1, passthrough: { src: "copy" } })); }
+}
+
+/* ---- tick subscriptions (chart symbol + bot symbol) ---- */
+const subs = new Set();
+function ensureTicks(sym) {
+  if (!ws || !live || subs.has(sym)) return;
+  subs.add(sym);
+  ws.send(JSON.stringify({ ticks_history: sym, end: "latest", count: 120, style: "ticks", subscribe: 1 }));
+}
+function subscribeTicks() {
+  if (!ws || !live) return;
+  ws.send(JSON.stringify({ forget_all: "ticks" }));
+  subs.clear();
+  ensureTicks(symbol);
+  if (bot.running) ensureTicks(bot.cfg.symbol);
+}
+
+function drawChart() {
+  const ticks = tickStore[symbol] || [];
+  const pip = pipSizes[symbol];
+  const last = ticks.at(-1), prev = ticks.at(-2);
+  const priceEl = $("price");
+  priceEl.textContent = last === undefined ? "—" : pip !== undefined ? last.toFixed(pip) : last;
+  priceEl.className = "price " + (last !== undefined && prev !== undefined && last >= prev ? "up" : "down");
+  $("last-digit").textContent = last === undefined ? "—" : lastDigit(symbol, last);
+  if (ticks.length < 2) { $("chart-line").setAttribute("points", ""); $("chart-fill").setAttribute("points", ""); return; }
+  const min = Math.min(...ticks), max = Math.max(...ticks), r = max - min || 1;
+  const pts = ticks.map((v, i) => `${(i / (ticks.length - 1)) * 100},${100 - ((v - min) / r) * 90 - 5}`).join(" ");
+  $("chart-line").setAttribute("points", pts);
+  $("chart-fill").setAttribute("points", `0,100 ${pts} 100,100`);
+}
+function lastDigit(sym, quote) {
+  const pip = pipSizes[sym] ?? 2;
+  return Number(quote.toFixed(pip).slice(-1));
+}
+
+function renderTrades(list) {
+  if (!list || !list.length) return;
+  $("no-trades").classList.add("hidden");
+  const t = $("trades"); t.classList.remove("hidden");
+  t.querySelector("tbody").innerHTML = list.map((x) => {
+    const profit = x.sell_price - x.buy_price;
+    return `<tr>
+      <td>${new Date(x.purchase_time * 1000).toLocaleTimeString()}</td>
+      <td>${esc(x.contract_type ?? (x.shortcode || "").split("_")[0])}</td>
+      <td>${x.buy_price.toFixed(2)}</td><td>${x.sell_price.toFixed(2)}</td>
+      <td class="${profit >= 0 ? "up" : "down"}">${profit.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+}
+
+/* ---- session stats + equity curve ---- */
+function recordResult(profit) {
+  session.trades++;
+  if (profit > 0) session.wins++;
+  session.pl += profit;
+  session.curve.push(session.pl);
+  renderStats();
+  if (ws && live) ws.send(JSON.stringify({ profit_table: 1, limit: 15, description: 1, sort: "DESC" }));
+}
+function renderStats() {
+  const plEl = $("st-pl");
+  plEl.textContent = fmtPL(session.pl);
+  plEl.className = "v " + (session.pl >= 0 ? "up" : "down");
+  $("st-trades").textContent = session.trades;
+  $("st-wr").textContent = session.trades ? Math.round((session.wins / session.trades) * 100) + "%" : "—";
+  const c = session.curve;
+  if (c.length < 2) return;
+  $("eq-empty").classList.add("hidden");
+  $("eq-chart").classList.remove("hidden");
+  const min = Math.min(...c, 0), max = Math.max(...c, 0), r = max - min || 1;
+  const y = (v) => 100 - ((v - min) / r) * 90 - 5;
+  $("eq-line").setAttribute("points", c.map((v, i) => `${(i / (c.length - 1)) * 100},${y(v)}`).join(" "));
+  $("eq-zero").setAttribute("y1", y(0)); $("eq-zero").setAttribute("y2", y(0));
+  $("eq-line").setAttribute("stroke", session.pl >= 0 ? "#7ae582" : "#f0544f");
+}
+
+/* ================= Manual trader ================= */
+const MODES = {
+  rf: { a: ["Rise ▲", "CALL"], b: ["Fall ▼", "PUT"], barrier: false },
+  eo: { a: ["Even", "DIGITEVEN"], b: ["Odd", "DIGITODD"], barrier: false },
+  ou: { a: ["Over", "DIGITOVER"], b: ["Under", "DIGITUNDER"], barrier: true },
+};
+function applyMode() {
+  const m = MODES[$("mode").value];
+  $("btn-rise").textContent = m.a[0]; $("btn-fall").textContent = m.b[0];
+  $("barrier-wrap").classList.toggle("hidden", !m.barrier);
+}
+$("mode").onchange = applyMode;
+
+function sendBuy(type, stake, duration, sym, barrier, src) {
+  const parameters = {
+    amount: stake, basis: "stake", contract_type: type, currency,
+    duration, duration_unit: "t", underlying_symbol: sym, symbol: sym,
+  };
+  if (barrier !== undefined && barrier !== null) parameters.barrier = String(barrier);
+  ws.send(JSON.stringify({ buy: 1, price: stake, parameters, passthrough: { src } }));
+}
+function buy(which) {
+  if (!ws || !live) return;
+  const m = MODES[$("mode").value];
+  const type = which === "a" ? m.a[1] : m.b[1];
+  const stake = Number($("stake").value), duration = Number($("duration").value);
+  if (!(stake >= 0.35)) { $("msg").textContent = "Minimum stake is 0.35."; return; }
+  $("msg").textContent = "Placing trade…";
+  sendBuy(type, stake, duration, symbol, m.barrier ? Number($("barrier").value) : null, "manual");
+}
+$("btn-rise").onclick = () => buy("a");
+$("btn-fall").onclick = () => buy("b");
+
+/* market chips */
+$("markets").innerHTML = MARKETS.map((m, i) =>
+  `<button class="chip${i === 0 ? " active" : ""}" data-s="${m.symbol}">${m.name}</button>`).join("");
+$("markets").onclick = (e) => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+  b.classList.add("active");
+  symbol = b.dataset.s;
+  drawChart();
+  subscribeTicks();
+};
+
+/* ================= Bot engine ================= */
+const TYPES = ["SIGNAL", "RISE", "FALL", "EVEN", "ODD", "OVER", "UNDER"];
+const SIGNALS = {
+  every:  { name: "Every tick (no condition)", fields: [] },
+  sma:    { name: "Price crosses SMA", fields: [{ k: "period", label: "SMA period", def: 10, min: 2, max: 100 }] },
+  rsi:    { name: "RSI oversold / overbought", fields: [
+            { k: "period", label: "RSI period", def: 14, min: 2, max: 50 },
+            { k: "level", label: "Oversold level (overbought = 100 − level)", def: 30, min: 5, max: 45 }] },
+  streak: { name: "Streak of same-direction ticks", fields: [
+            { k: "n", label: "Consecutive ticks", def: 3, min: 2, max: 10 },
+            { k: "mode", label: "After the streak", def: "reversal", options: [["reversal", "Bet on reversal"], ["momentum", "Bet on continuation"]] }] },
+};
+const bot = { running: false, inTrade: false, cfg: null, stake: 0, lossStreak: 0, stats: { trades: 0, wins: 0, pl: 0 } };
+const logLines = [];
+
+function botLog(msg, cls) {
+  logLines.unshift(`<div class="${cls || ""}">${new Date().toLocaleTimeString()} · ${esc(msg)}</div>`);
+  if (logLines.length > 60) logLines.pop();
+  $("bot-log").innerHTML = logLines.join("");
+}
+
+/* -- signals -- */
+function sma(arr, n) { let s = 0; for (let i = arr.length - n; i < arr.length; i++) s += arr[i]; return s / n; }
+function evalSignal(cfg, arr) {
+  const s = cfg.sig || {};
+  switch (cfg.signal) {
+    case "every": return arr.length >= 2 ? "ANY" : null;
+    case "sma": {
+      const n = s.period; if (arr.length < n + 1) return null;
+      const prev = arr[arr.length - 2], cur = arr.at(-1);
+      const smaPrev = sma(arr.slice(0, -1), n), smaCur = sma(arr, n);
+      if (prev <= smaPrev && cur > smaCur) return "CALL";
+      if (prev >= smaPrev && cur < smaCur) return "PUT";
+      return null;
+    }
+    case "rsi": {
+      const n = s.period; if (arr.length < n + 1) return null;
+      let g = 0, l = 0;
+      for (let i = arr.length - n; i < arr.length; i++) { const diff = arr[i] - arr[i - 1]; if (diff > 0) g += diff; else l -= diff; }
+      const rsi = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+      if (rsi < s.level) return "CALL";
+      if (rsi > 100 - s.level) return "PUT";
+      return null;
+    }
+    case "streak": {
+      const n = s.n; if (arr.length < n + 1) return null;
+      let up = 0, down = 0;
+      for (let i = arr.length - 1; i >= 1; i--) {
+        const diff = arr[i] - arr[i - 1];
+        if (diff > 0 && down === 0) up++; else if (diff < 0 && up === 0) down++; else break;
+      }
+      const rev = s.mode === "reversal";
+      if (up >= n) return rev ? "PUT" : "CALL";
+      if (down >= n) return rev ? "CALL" : "PUT";
+      return null;
+    }
+  }
+  return null;
+}
+function decide(cfg, sig, arr) {
+  if (!sig) return null;
+  switch (cfg.type) {
+    case "SIGNAL": return sig === "ANY" ? (arr.at(-1) >= arr.at(-2) ? "CALL" : "PUT") : sig;
+    case "RISE": return sig === "CALL" || sig === "ANY" ? "CALL" : null;
+    case "FALL": return sig === "PUT" || sig === "ANY" ? "PUT" : null;
+    case "EVEN": return "DIGITEVEN";
+    case "ODD": return "DIGITODD";
+    case "OVER": return "DIGITOVER";
+    case "UNDER": return "DIGITUNDER";
+  }
+  return null;
+}
+
+/* -- run loop -- */
+function onBotTick(sym) {
+  if (!bot.running || bot.inTrade || !live || sym !== bot.cfg.symbol) return;
+  const cfg = bot.cfg, arr = tickStore[sym] || [];
+  const type = decide(cfg, evalSignal(cfg, arr), arr);
+  if (!type) return;
+  if (bot.stake > balance) { botStop("Stopped: stake is higher than balance"); return; }
+  bot.inTrade = true;
+  const barrier = type === "DIGITOVER" || type === "DIGITUNDER" ? cfg.barrier : null;
+  botLog(`Signal → ${type.replace("DIGIT", "")} · stake ${bot.stake.toFixed(2)}`);
+  sendBuy(type, bot.stake, cfg.duration, sym, barrier, "bot");
+}
+
+function onContractDone(src, profit) {
+  recordResult(profit);
+  if (src !== "bot") {
+    $("msg").textContent = (profit >= 0 ? "Won " : "Lost ") + Math.abs(profit).toFixed(2) + " " + currency;
+    return;
+  }
+  const cfg = bot.cfg, st = bot.stats;
+  st.trades++; st.pl += profit;
+  if (profit > 0) { st.wins++; bot.lossStreak = 0; } else { bot.lossStreak++; }
+  botLog(`${profit >= 0 ? "Win" : "Loss"} ${fmtPL(profit)} · bot P/L ${fmtPL(st.pl)}`, profit >= 0 ? "ok" : "err");
+  if (cfg.mult > 1 && bot.lossStreak > 0 && bot.lossStreak <= cfg.steps) {
+    bot.stake = Math.round(cfg.stake * Math.pow(cfg.mult, bot.lossStreak) * 100) / 100;
+  } else { bot.stake = cfg.stake; if (bot.lossStreak > cfg.steps) bot.lossStreak = 0; }
+  bot.inTrade = false;
+  renderBot();
+  if (cfg.tp > 0 && st.pl >= cfg.tp) botStop("Take profit reached");
+  else if (cfg.sl > 0 && st.pl <= -cfg.sl) botStop("Stop loss reached");
+  else if (cfg.max > 0 && st.trades >= cfg.max) botStop("Max trades reached");
+}
+
+function botStart(cfg) {
+  if (bot.running) { alert("A bot is already running. Stop it first."); return; }
+  if (!ws || !live) { alert("Not connected yet. Check the red bar at the top for the reason, then press Reconnect."); return; }
+  cfg = normalizeCfg(cfg);
+  if (acctType[account] && acctType[account] !== "demo") {
+    if (!confirm(`You're about to run "${cfg.name}" on a REAL account (${account}). It will place real trades and can lose money. Continue?`)) return;
+  }
+  Object.assign(bot, { running: true, inTrade: false, cfg, stake: cfg.stake, lossStreak: 0, stats: { trades: 0, wins: 0, pl: 0 } });
+  botLog(`Started "${cfg.name}" on ${cfg.symbol}`, "ok");
+  ensureTicks(cfg.symbol);
+  renderBot();
+}
+function botStop(reason) {
+  if (!bot.running) return;
+  bot.running = false;
+  botLog(reason || "Stopped", reason && /reached/.test(reason) ? "ok" : "");
+  renderBot(reason);
+}
+function renderBot(reason) {
+  const st = bot.stats, c = bot.cfg;
+  const badge = bot.running ? "Running" : "Idle";
+  let summary = "No bot running.";
+  if (c) {
+    summary = `${c.name} · ${c.symbol}\nTrades ${st.trades} · Wins ${st.wins}\nP/L ${fmtPL(st.pl)} · Next stake ${bot.stake.toFixed(2)}`;
+    if (!bot.running) summary += "\n" + (reason || "Stopped");
+  }
+  for (const id of ["bot-badge", "bot-badge2"]) { $(id).textContent = badge; $(id).classList.toggle("run", bot.running); }
+  for (const id of ["bot-summary", "bot-summary2"]) { $(id).textContent = summary; $(id).style.whiteSpace = "pre-line"; }
+  $("dash-stop").classList.toggle("hidden", !bot.running);
+  $("b-stop").classList.toggle("hidden", !bot.running);
+  $("b-run").disabled = bot.running;
+}
+$("dash-stop").onclick = $("b-stop").onclick = () => botStop("Stopped by you");
+
+/* ================= Bot builder form ================= */
+$("b-symbol").innerHTML = MARKETS.map((m) => `<option value="${m.symbol}">${m.name}</option>`).join("");
+$("b-signal").innerHTML = Object.entries(SIGNALS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join("");
+
+function renderSigFields(values) {
+  const def = SIGNALS[$("b-signal").value];
+  $("sig-fields").innerHTML = def.fields.map((f) => {
+    const v = values && values[f.k] !== undefined ? values[f.k] : f.def;
+    if (f.options) return `<label>${f.label}<select id="sig-${f.k}">${f.options.map((o) => `<option value="${o[0]}"${o[0] === v ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>`;
+    return `<label>${f.label}<input type="number" id="sig-${f.k}" min="${f.min}" max="${f.max}" value="${v}"></label>`;
+  }).join("");
+}
+function applyBarrierVisibility() {
+  const t = $("b-type").value;
+  $("b-barrier-wrap").classList.toggle("hidden", !(t === "OVER" || t === "UNDER"));
+}
+$("b-signal").onchange = () => renderSigFields();
+$("b-type").onchange = applyBarrierVisibility;
+
+const clamp = (v, lo, hi, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+function normalizeCfg(c) {
+  c = c || {};
+  const signal = SIGNALS[c.signal] ? c.signal : "every";
+  const sig = {};
+  SIGNALS[signal].fields.forEach((f) => {
+    const raw = c.sig && c.sig[f.k];
+    if (f.options) sig[f.k] = f.options.some((o) => o[0] === raw) ? raw : f.def;
+    else sig[f.k] = Math.round(clamp(raw, f.min, f.max, f.def));
+  });
+  return {
+    name: String(c.name || "My bot").slice(0, 40),
+    symbol: MARKETS.some((m) => m.symbol === c.symbol) ? c.symbol : MARKETS[0].symbol,
+    type: TYPES.includes(c.type) ? c.type : "SIGNAL",
+    barrier: Math.round(clamp(c.barrier, 0, 9, 5)),
+    duration: Math.round(clamp(c.duration, 1, 10, 5)),
+    stake: clamp(c.stake, 0.35, 1000, 1),
+    signal, sig,
+    mult: clamp(c.mult, 1, 5, 1),
+    steps: Math.round(clamp(c.steps, 1, 8, 3)),
+    tp: clamp(c.tp, 0, 100000, 0),
+    sl: clamp(c.sl, 0, 100000, 0),
+    max: Math.round(clamp(c.max, 0, 100000, 0)),
+  };
+}
+function readCfg() {
+  const cfg = {
+    name: $("b-name").value, symbol: $("b-symbol").value, type: $("b-type").value, barrier: $("b-barrier").value,
+    duration: $("b-duration").value, stake: $("b-stake").value, signal: $("b-signal").value, sig: {},
+    mult: $("b-mult").value, steps: $("b-steps").value, tp: $("b-tp").value, sl: $("b-sl").value, max: $("b-max").value,
+  };
+  SIGNALS[cfg.signal].fields.forEach((f) => { cfg.sig[f.k] = $("sig-" + f.k).value; });
+  return normalizeCfg(cfg);
+}
+function writeCfg(c) {
+  c = normalizeCfg(c);
+  $("b-name").value = c.name; $("b-symbol").value = c.symbol; $("b-type").value = c.type; $("b-barrier").value = c.barrier;
+  $("b-duration").value = c.duration; $("b-stake").value = c.stake; $("b-signal").value = c.signal;
+  renderSigFields(c.sig);
+  $("b-mult").value = c.mult; $("b-steps").value = c.steps; $("b-tp").value = c.tp; $("b-sl").value = c.sl; $("b-max").value = c.max;
+  applyBarrierVisibility();
+}
+$("b-run").onclick = () => botStart(readCfg());
+
+/* ---- saved bots ---- */
+function loadBots() { try { return JSON.parse(LS.get("tradedesk_bots") || "[]").map(normalizeCfg); } catch { return []; } }
+function storeBots(list) { LS.set("tradedesk_bots", JSON.stringify(list)); }
+function renderMyBots() {
+  const list = loadBots();
+  $("no-bots").classList.toggle("hidden", list.length > 0);
+  $("my-bots").innerHTML = list.map((b, i) => `
+    <div class="botrow">
+      <span><strong>${esc(b.name)}</strong> <span class="mono" style="color:var(--muted);font-size:12px">· ${esc(b.symbol)} · ${esc(b.type)} · ${esc(b.signal)}</span></span>
+      <span style="display:flex;gap:8px">
+        <button class="btn-ghost mini" data-act="load" data-i="${i}">Load</button>
+        <button class="btn-primary mini" data-act="run" data-i="${i}">Run</button>
+        <button class="btn-ghost mini" data-act="del" data-i="${i}">Delete</button>
+      </span>
+    </div>`).join("");
+}
+$("b-save").onclick = () => {
+  const cfg = readCfg(), list = loadBots();
+  const at = list.findIndex((b) => b.name === cfg.name);
+  if (at >= 0) list[at] = cfg; else list.push(cfg);
+  storeBots(list); renderMyBots(); botLog(`Saved "${cfg.name}"`, "ok");
+};
+$("my-bots").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const list = loadBots(), i = Number(b.dataset.i);
+  if (b.dataset.act === "load") writeCfg(list[i]);
+  if (b.dataset.act === "run") { writeCfg(list[i]); botStart(list[i]); }
+  if (b.dataset.act === "del") { list.splice(i, 1); storeBots(list); renderMyBots(); }
+};
+$("b-export").onclick = () => { $("bot-json").value = JSON.stringify(readCfg(), null, 2); };
+$("b-import").onclick = () => {
+  try { writeCfg(JSON.parse($("bot-json").value)); botLog("Imported bot into builder", "ok"); }
+  catch { alert("That isn't valid bot JSON."); }
+};
+
+/* ================= Free bots ================= */
+const FREE_BOTS = [
+  { risk: "low", desc: "After 3 ticks in a row in one direction, bets the other way. Small stake with take-profit and stop-loss.",
+    cfg: { name: "Streak Reverser", symbol: "R_100", type: "SIGNAL", duration: 5, stake: 1, signal: "streak", sig: { n: 3, mode: "reversal" }, mult: 1, tp: 5, sl: 5 } },
+  { risk: "low", desc: "Rides the trend: buys Rise when price crosses above its 10-tick average, Fall when it crosses below.",
+    cfg: { name: "SMA Trend Rider", symbol: "R_75", type: "SIGNAL", duration: 5, stake: 1, signal: "sma", sig: { period: 10 }, mult: 1, tp: 5, sl: 5 } },
+  { risk: "low", desc: "Looks for stretched moves using RSI(14): Rise when oversold, Fall when overbought.",
+    cfg: { name: "RSI Bounce", symbol: "R_50", type: "SIGNAL", duration: 5, stake: 1, signal: "rsi", sig: { period: 14, level: 30 }, mult: 1, tp: 5, sl: 5 } },
+  { risk: "med", desc: "Fast 1-tick Even/Odd scalper with a tiny stake. Many trades, so outcomes swing quickly; limits stop it early.",
+    cfg: { name: "Even Scalper", symbol: "R_100", type: "EVEN", duration: 1, stake: 0.5, signal: "every", mult: 1, tp: 3, sl: 3 } },
+  { risk: "med", desc: "Digit Over 2 wins on most ticks but pays little per win, so a few losses erase many wins.",
+    cfg: { name: "Over 2 Cautious", symbol: "R_10", type: "OVER", barrier: 2, duration: 1, stake: 0.5, signal: "every", mult: 1, tp: 2, sl: 3 } },
+  { risk: "high", desc: "Streak reversals with the stake doubled after each loss (max 3 steps). One bad run can cost several times your base stake.",
+    cfg: { name: "Recovery Doubler", symbol: "R_50", type: "SIGNAL", duration: 5, stake: 0.5, signal: "streak", sig: { n: 3, mode: "reversal" }, mult: 2, steps: 3, tp: 3, sl: 6 } },
+];
+$("free-bots").innerHTML = FREE_BOTS.map((b, i) => `
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:18px">${esc(b.cfg.name)}</h2><span class="badge ${b.risk}">${b.risk} risk</span></div>
+    <p class="d">${esc(b.desc)}</p>
+    <p class="mono" style="font-size:12px;color:var(--muted)">${esc(b.cfg.symbol)} · stake ${b.cfg.stake} · TP ${b.cfg.tp} / SL ${b.cfg.sl}</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost mini" data-act="open" data-i="${i}">Open in builder</button>
+      <button class="btn-primary mini" data-act="run" data-i="${i}">Run now</button>
+    </div>
+  </div>`).join("");
+$("free-bots").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const f = FREE_BOTS[Number(b.dataset.i)];
+  writeCfg(f.cfg);
+  if (b.dataset.act === "open") showTab("builder");
+  if (b.dataset.act === "run") { showTab("builder"); botStart(f.cfg); }
+};
+
+/* ================= Analysis tool ================= */
+const an = { sym: null, prices: [], pip: 2 };
+let anTimer = null;
+$("an-symbol").innerHTML = MARKETS.map((m) => `<option value="${m.symbol}">${m.name}</option>`).join("");
+$("an-barrier").innerHTML = [0,1,2,3,4,5,6,7,8,9].map((n) => `<option value="${n}"${n === 5 ? " selected" : ""}>${n}</option>`).join("");
+
+function anFetch(silent) {
+  if (!ws || !live) { $("an-msg").textContent = "Not connected yet. Check the red bar at the top for the reason, then press Reconnect."; return; }
+  if (silent !== true) $("an-msg").textContent = "Loading…";
+  ws.send(JSON.stringify({ ticks_history: $("an-symbol").value, end: "latest", count: Number($("an-count").value), style: "ticks", passthrough: { src: "analysis" } }));
+}
+function onAnalysisData(sym, d) {
+  an.sym = sym; an.prices = d.history.prices || [];
+  an.pip = d.pip_size ?? pipSizes[sym] ?? 2;
+  if (d.pip_size !== undefined) pipSizes[sym] = d.pip_size;
+  $("an-msg").textContent = "Updated " + new Date().toLocaleTimeString();
+  renderAnalysis();
+}
+function rsiOf(arr, n) {
+  if (arr.length < n + 1) return null;
+  let g = 0, l = 0;
+  for (let i = arr.length - n; i < arr.length; i++) { const x = arr[i] - arr[i - 1]; if (x > 0) g += x; else l -= x; }
+  return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+}
+function statCard(k, v, cls, small) { return `<div class="panel stat"><div class="k">${k}</div><div class="v${small ? " sm" : ""} ${cls || ""}">${v}</div></div>`; }
+
+function renderAnalysis() {
+  const p = an.prices, n = p.length;
+  if (n < 20) { $("an-sub").textContent = "Not enough ticks returned to analyze."; return; }
+  const pip = an.pip, digits = p.map((x) => Number(x.toFixed(pip).slice(-1)));
+  const counts = Array(10).fill(0); digits.forEach((dg) => counts[dg]++);
+  const pct = counts.map((c) => (c / n) * 100);
+  const hi = pct.indexOf(Math.max(...pct)), lo = pct.indexOf(Math.min(...pct));
+  const scale = Math.max(...pct, 10) * 1.15;
+  $("an-sub").textContent = `${an.sym} · ${n} ticks · dashed line = 10% (even split)`;
+  $("an-plot").innerHTML = pct.map((v, i) =>
+    `<div class="bar${i === hi ? " hi" : i === lo ? " lo" : ""}" style="height:${(v / scale) * 100}%"><span class="bpct">${v.toFixed(1)}%</span></div>`).join("")
+    + `<div class="refline" style="bottom:${(10 / scale) * 100}%"></div>`;
+  $("an-digits").innerHTML = [0,1,2,3,4,5,6,7,8,9].map((i) => `<span>${i}</span>`).join("");
+  $("an-tail").innerHTML = digits.slice(-20).map((dg) => `<span class="chip${dg % 2 === 0 ? " active" : ""}">${dg}</span>`).join("");
+
+  const exp = n / 10, chi = counts.reduce((a, c) => a + (c - exp) ** 2 / exp, 0);
+  $("an-verdict").textContent = chi <= 16.92
+    ? `χ² = ${chi.toFixed(1)} (limit 16.9): the digit spread is within normal random variation.`
+    : `χ² = ${chi.toFixed(1)} (limit 16.9): more uneven than usual for a fair feed. Even so, it doesn't tell you what the next digit will be.`;
+
+  const even = digits.filter((x) => x % 2 === 0).length;
+  const b = Number($("an-barrier").value);
+  const over = digits.filter((x) => x > b).length, under = digits.filter((x) => x < b).length;
+  let up = 0, down = 0, curDir = 0, curLen = 0, maxLen = 0, run = 0, runDir = 0;
+  const diffs = [];
+  for (let i = 1; i < n; i++) {
+    const x = p[i] - p[i - 1]; diffs.push(x);
+    const dir = x > 0 ? 1 : x < 0 ? -1 : 0;
+    if (dir > 0) up++; else if (dir < 0) down++;
+    if (dir !== 0 && dir === runDir) run++; else { run = dir === 0 ? 0 : 1; runDir = dir; }
+    if (run > maxLen) maxLen = run;
+  }
+  curDir = runDir; curLen = run;
+  const mean = diffs.reduce((a, x) => a + x, 0) / diffs.length;
+  const sd = Math.sqrt(diffs.reduce((a, x) => a + (x - mean) ** 2, 0) / diffs.length);
+  const last = p[n - 1], s10 = n >= 10 ? sma(p, 10) : null, s50 = n >= 50 ? sma(p, 50) : null, rsi = rsiOf(p, 14);
+  let trend = "—", tcls = "";
+  if (s50 !== null && s10 !== null) {
+    if (last > s50 && s10 > s50) { trend = "Above averages"; tcls = "up"; }
+    else if (last < s50 && s10 < s50) { trend = "Below averages"; tcls = "down"; }
+    else trend = "Mixed";
+  }
+  const ch = (a) => ((a / n) * 100).toFixed(1) + "%";
+  $("an-stats").innerHTML = [
+    statCard("Even", ch(even)), statCard("Odd", ch(n - even)),
+    statCard("Rise ticks", ((up / (n - 1)) * 100).toFixed(1) + "%", "up"), statCard("Fall ticks", ((down / (n - 1)) * 100).toFixed(1) + "%", "down"),
+    statCard(`Over ${b}`, ch(over)), statCard(`Under ${b}`, ch(under)),
+    statCard("Last price", last.toFixed(pip), "", true), statCard("SMA 10", s10 === null ? "—" : s10.toFixed(pip), "", true),
+    statCard("SMA 50", s50 === null ? "—" : s50.toFixed(pip), "", true),
+    statCard("RSI 14", rsi === null ? "—" : rsi.toFixed(1), rsi === null ? "" : rsi < 30 ? "up" : rsi > 70 ? "down" : "", true),
+    statCard("Volatility (σ/tick)", sd.toFixed(pip + 1), "", true),
+    statCard("Current streak", curLen ? `${curLen} ${curDir > 0 ? "up" : "down"}` : "—", curDir > 0 ? "up" : curDir < 0 ? "down" : "", true),
+    statCard("Longest streak", maxLen, "", true), statCard("Trend", trend, tcls, true),
+  ].join("");
+}
+$("an-run").onclick = () => anFetch();
+$("an-symbol").onchange = () => anFetch();
+$("an-count").onchange = () => anFetch();
+$("an-barrier").onchange = () => { if (an.prices.length) renderAnalysis(); };
+$("an-live").onchange = () => {
+  clearInterval(anTimer);
+  if ($("an-live").checked) anTimer = setInterval(() => { if (!$("tab-analysis").classList.contains("hidden")) anFetch(true); }, 6000);
+};
+$("an-tobuilder").onclick = () => { $("b-symbol").value = an.sym || $("an-symbol").value; showTab("builder"); };
+
+/* ================= Copy trading ================= */
+const CP_TYPES = [
+  ["Rise / Fall", ["CALL", "PUT"]], ["Even / Odd", ["DIGITEVEN", "DIGITODD"]],
+  ["Over / Under", ["DIGITOVER", "DIGITUNDER"]], ["Matches / Differs", ["DIGITMATCH", "DIGITDIFF"]],
+];
+let copyTraders = [];
+$("cp-assets").innerHTML = MARKETS.map((m) => `<label><input type="checkbox" value="${m.symbol}"> ${m.name}</label>`).join("");
+$("cp-types").innerHTML = CP_TYPES.map((t, i) => `<label><input type="checkbox" value="${i}"> ${t[0]}</label>`).join("");
+
+function copyMsg(m, err) { const e = $("cp-msg"); e.textContent = m; e.style.color = err ? "var(--red)" : "var(--muted)"; }
+function renderKV(obj) {
+  return "<table><tbody>" + Object.entries(obj).map(([k, v]) =>
+    `<tr><td>${esc(k.replace(/_/g, " "))}</td><td>${esc(typeof v === "object" && v !== null ? JSON.stringify(v).slice(0, 160) : v)}</td></tr>`).join("") + "</tbody></table>";
+}
+function refreshCopy() {
+  if (!ws || !live) { copyMsg("Not connected yet.", true); return; }
+  ws.send(JSON.stringify({ copytrading_list: 1, passthrough: { src: "copy" } }));
+  ws.send(JSON.stringify({ get_settings: 1, passthrough: { src: "copy" } }));
+}
+function renderAllow(v) { $("cp-allow").textContent = "Status: " + (v === undefined ? "unknown" : Number(v) ? "others can copy you" : "copying disabled"); }
+function renderCopyList(l) {
+  copyTraders = l.traders || [];
+  const copiers = l.copiers || [];
+  $("cp-no-traders").classList.toggle("hidden", copyTraders.length > 0);
+  $("cp-traders").innerHTML = copyTraders.map((t, i) => `
+    <div class="botrow">
+      <span><strong>${esc(t.loginid || "trader")}</strong> <span class="mono" style="color:var(--muted);font-size:12px">· ${t.assets ? esc([].concat(t.assets).join(", ")) : "all markets"} · ${t.trade_types ? esc([].concat(t.trade_types).join(", ")) : "all types"} · stake ${esc(t.min_trade_stake ?? "—")}–${esc(t.max_trade_stake ?? "—")}</span></span>
+      <button class="btn-ghost mini" data-i="${i}">Stop copying</button>
+    </div>`).join("");
+  $("cp-copiers").textContent = copiers.length ? copiers.map((c) => c.loginid || c).join(", ") : "None.";
+}
+$("cp-start").onclick = () => {
+  if (!ws || !live) { copyMsg("Not connected yet.", true); return; }
+  const token = $("cp-token").value.trim();
+  if (!token) { copyMsg("Paste the trader's API token first.", true); return; }
+  if (acctType[account] && acctType[account] !== "demo" && !confirm(`Start copying on your REAL account (${account})? Their trades will use your money and can lose it.`)) return;
+  const req = { copy_start: token, passthrough: { src: "copy" } };
+  const assets = [...document.querySelectorAll("#cp-assets input:checked")].map((c) => c.value);
+  const types = [...document.querySelectorAll("#cp-types input:checked")].flatMap((c) => CP_TYPES[Number(c.value)][1]);
+  if (assets.length) req.assets = assets;
+  if (types.length) req.trade_types = types;
+  const mn = Number($("cp-min").value), mx = Number($("cp-max").value);
+  if (mn > 0) req.min_trade_stake = mn;
+  if (mx > 0) req.max_trade_stake = mx;
+  copyMsg("Starting…", false);
+  ws.send(JSON.stringify(req));
+};
+$("cp-traders").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const t = copyTraders[Number(b.dataset.i)];
+  if (t && t.token) ws.send(JSON.stringify({ copy_stop: t.token, passthrough: { src: "copy" } }));
+  else copyMsg("Deriv didn't return a token for this trader, so it can't be stopped from here.", true);
+};
+$("cp-refresh").onclick = refreshCopy;
+$("cp-allow-on").onclick = () => ws && live && ws.send(JSON.stringify({ set_settings: 1, allow_copiers: 1, passthrough: { src: "copy" } }));
+$("cp-allow-off").onclick = () => ws && live && ws.send(JSON.stringify({ set_settings: 1, allow_copiers: 0, passthrough: { src: "copy" } }));
+$("cp-stats").onclick = () => {
+  const id = $("cp-trader-id").value.trim() || account;
+  if (ws && live) ws.send(JSON.stringify({ copytrading_statistics: 1, trader_id: id, passthrough: { src: "copy" } }));
+};
+
+/* init */
+applyMode(); writeCfg({}); renderMyBots(); renderBot(); renderStats();
+
+/* ================= Boot ================= */
+(async () => {
+  let cameFromDeriv = false;
+  try { cameFromDeriv = await handleCallback(); }
+  catch (e) { showErr("Login could not finish: " + e.message); }
+  if (getToken()) {
+    showDash();
+    loadAccounts().catch((e) => { setStatus(e.message); });
+  } else if (!cameFromDeriv && location.search.includes("error")) {
+    showErr("Deriv returned an error — please try logging in again.");
+  }
+  window.__tdReady = true;
+})();
+</script>
+</body>
+</html>
